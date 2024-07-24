@@ -56,6 +56,19 @@ The wrapper algorithms require a prefix (`fomo\_`/`mstar\_`) which is then follo
 
 ---
 
+## Traces
+
+By default `cache-sim` supports the following trace formats:
+
+1. `basic`: only an address is given
+2. `fiu`: Format for FIU traces
+3. `msr`: Format for MSR traces
+4. `nexus`: Format for Nexus traces
+5. `visa`: Format for Visa traces
+6. `vscsi`: Format for VSCSi traces
+
+---
+
 ## Compiling
 
 Compiling after all preparations is pretty simple: run `make` ___from the project's root folder!___
