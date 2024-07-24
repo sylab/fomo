@@ -1,0 +1,7 @@
+Create a static library for policies (lru_policy atm)
+Do simple run/make of sim
+logerror
+logdebug?
+
+Can I make a script to auto-generate the registries for sim and dm-cache?
+Can I make it a part of the Makefile?

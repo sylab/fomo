@@ -29,8 +29,6 @@ struct entry;
  * structure is within the policy-specific entry for allowing public access
  * to the "general" entry information while hiding the policy-specific bits.
  *
- * capacity - Capacity of the entry_pool
- * size - Total size of all allocated entries
  * entries_begin - Pointer to the first "general" entry
  * entries_end - Pointer to the final "general" entry
  * free - List of free, "unallocated" entries
@@ -41,8 +39,6 @@ struct entry;
  * entries - Array of pointers to "general" entries
  */
 struct entry_pool {
-  unsigned capacity;
-  unsigned size;
   void *entries_begin;
   void *entries_end;
   struct list_head free;
@@ -82,20 +78,18 @@ struct entry_pool {
  * without needing to destroy then recreate the entry_pool to do so.
  *
  * \note We could also say that epool_create() only works with what it
- *       actually initializes (with a few exceptions).
+ *       actually initializes (with nr_entries being the exception).
  *
  * _epool - Pointer to an entry_pool
- * _capacity - The capacity of the entry_pool, measured in units
+ * _nr_entries - Number of entries the entry_pool should have
  * _type - The type of the policy-specific entry
  * _member - The "general" entry member of the policy-specific entry
  */
-#define epool_create(_epool, _capacity, _type, _member)                        \
+#define epool_create(_epool, _nr_entries, _type, _member)                      \
   {                                                                            \
     struct entry_pool *ep_ = (_epool);                                         \
-    unsigned nr_ = (_capacity);                                                \
+    unsigned nr_ = (_nr_entries);                                              \
     unsigned i_;                                                               \
-    ep_->capacity = _capacity;                                                 \
-    ep_->size = 0u;                                                            \
     ep_->entries_begin = mem_alloc(sizeof(_type) * nr_);                       \
     ep_->entries_end = ((_type *)ep_->entries_begin) + nr_;                    \
     ep_->nr_entries = nr_;                                                     \
@@ -146,7 +140,6 @@ static void epool_init(struct entry_pool *ep, unsigned starting_index) {
     e->allocated = false;
     e->migrating = false;
   }
-  ep->size = 0;
   ep->nr_allocated = 0;
   ep->nr_migrating = 0;
   ep->starting_index = starting_index;
@@ -165,31 +158,27 @@ static void epool_exit(struct entry_pool *ep) {
 
 /** "Allocates" the given entry from the entry_pool
  */
-static void alloc_this_entry(struct entry_pool *ep, struct entry *e,
-                             unsigned size) {
+static void alloc_this_entry(struct entry_pool *ep, struct entry *e) {
   list_del_init(&e->pool_list);
   INIT_HLIST_NODE(&e->ht_list);
   queue_head_init(&e->wb_list);
   e->allocated = true;
-  e->size = size;
-  ep->size += size;
   ++ep->nr_allocated;
 }
 
 /** "Allocates" an entry from the entry_pool
  *
  * Gets a free entry from the entry_pool's free entry list.
- * Should the allocation not be possible, a NULL pointer is returned.
+ * Should the free entry list be empty, a NULL pointer is returned.
  */
-static struct entry *alloc_entry(struct entry_pool *ep, unsigned size) {
+static struct entry *alloc_entry(struct entry_pool *ep) {
   struct entry *e;
 
-  if (ep->size + size > ep->capacity) {
+  if (list_empty(&ep->free))
     return NULL;
-  }
 
   e = list_entry(list_pop(&ep->free), struct entry, pool_list);
-  alloc_this_entry(ep, e, size);
+  alloc_this_entry(ep, e);
   return e;
 }
 
@@ -201,11 +190,11 @@ static struct entry *alloc_entry(struct entry_pool *ep, unsigned size) {
  *          the entry already be allocated, the program fails
  */
 static struct entry *alloc_particular_entry(struct entry_pool *ep,
-                                            cblock_t cblock, unsigned size) {
+                                            cblock_t cblock) {
   struct entry *e = epool_at(ep, from_cblock(cblock));
   LOG_ASSERT(!e->allocated);
 
-  alloc_this_entry(ep, e, size);
+  alloc_this_entry(ep, e);
   return e;
 }
 
@@ -241,7 +230,6 @@ static bool in_pool(struct entry_pool *ep, void *e) {
  *       unsigned integer usable as a cache block address at the end.
  *
  * \warning If entry is \a not from the entry_pool the program fails.
- * \warning Does not work with object caching.
  */
 static cblock_t infer_cblock(struct entry_pool *ep, struct entry *e) {
   uintptr_t entries_begin;
@@ -298,7 +286,6 @@ static void free_entry(struct entry_pool *ep, struct entry *e) {
   LOG_ASSERT(in_pool(ep, e));
   LOG_ASSERT(ep->nr_allocated > 0);
   ep->nr_allocated--;
-  ep->size -= e->size;
   e->allocated = false;
   if (e->migrating) {
     ep->nr_migrating--;

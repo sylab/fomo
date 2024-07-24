@@ -1,0 +1,41 @@
+Separation Design:
+
+                                      +-- userspace simulation
++----------+     +----------------+   |
+| policy.h | <-- | Impl. Agnostic | <-+-- dmcache kernel module
++----------+     |     Struct     |   |
+     |           +----------------+   +-- bcache kernel module
+     |                                |
+     |                                +-- more?
+     V
++-----------+     +----------------+
+|    LRU    | --> | Impl. Specific | --> output --+-- LRU userspace simulation
+| Impl. Ag. |     |   Functions/   |              |
++-----------+     |    Structs     |              +-- LRU dmcache kernel module
+                  | using policy.h |              |
+                  +----------------+              +-- LRU bcache kernel module
+                                                  |
+                                                  +-- more?
+
+BUT!
+we also want front end to be algorithm agnostic!
+
+How do we do that?
+- Expose more functions to allow for calls?
+- Register names and structures w/ functions set to allow for on-demand creation? <--
+  - How does it look?
+
+    +----------------------+
+    | LRU_registration     |
+    | .name = "lru"        |
+    | .create = lru_create |
+    | ...etc               |
+    +----------------------+
+
+  - How does it work?
+    Global registration list (TO BE IMPLEMENTED)
+    Global registration searches said list for matching name and calls create function,
+      then works off of the returned policy struct and functions
+    Needs to not interfere with dmcache registration design.
+    Oh yeah.. I forgot about how I wanted to separate each algorithm into their own kernel modules....
+    FORGET THAT! UNIFY! D:<

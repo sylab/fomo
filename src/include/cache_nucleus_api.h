@@ -29,8 +29,8 @@ static void policy_remove(struct cache_nucleus *cn, oblock_t oblock,
  * of insertion.
  */
 static void policy_insert(struct cache_nucleus *cn, oblock_t oblock,
-                          cblock_t cblock, unsigned size) {
-  cn->insert(cn, oblock, cblock, size);
+                          cblock_t cblock) {
+  cn->insert(cn, oblock, cblock);
 }
 
 /** policy_migrated:
@@ -70,9 +70,9 @@ static struct entry *policy_cblock_lookup(struct cache_nucleus *cn,
  * The algorithm puts this information in result and passed back to the caller.
  * Returns 0 if no problems occur, otherwise an error occurred.
  */
-static int policy_map(struct cache_nucleus *cn, oblock_t oblock, unsigned size,
-                      bool write, struct cache_nucleus_result *result) {
-  return cn->map(cn, oblock, size, write, result);
+static int policy_map(struct cache_nucleus *cn, oblock_t oblock, bool write,
+                      struct cache_nucleus_result *result) {
+  return cn->map(cn, oblock, write, result);
 }
 
 /** policy_remap:
@@ -137,9 +137,9 @@ static cblock_t policy_infer_cblock(struct cache_nucleus *cn, struct entry *e) {
  * Get entry to be evicted next.
  */
 static enum cache_nucleus_operation
-policy_next_victim(struct cache_nucleus *cn, oblock_t oblock, unsigned size,
-                   bool write, struct entry **next_victim_p) {
-  return cn->next_victim(cn, oblock, size, write, next_victim_p);
+policy_next_victim(struct cache_nucleus *cn, oblock_t oblock,
+                   struct entry **next_victim_p) {
+  return cn->next_victim(cn, oblock, next_victim_p);
 }
 
 #endif /* POLICY_API_H */

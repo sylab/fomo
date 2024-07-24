@@ -1,0 +1,68 @@
+Problem:
+Need to debug dmcache_policy kernel module, so we need to capture the kernel crash stack information.
+
+This information was for the creation of a VM, but could mostly be applied to the creation of a new real-world testing environment
+
+Journey:
+Ubuntu Trusty is 3.13 with backlogged updates from up to 3.15
+When compiling dm-cache kernel module on Ubuntu Trusty 3.13, symbol dm_bm_flush is missing
+This is because dm_bm_flush was added to the dm_block_manager in 3.14
+Trying to compile the dm-persistent-data module leads to an error as the bio struct was also changed in 3.14
+Trying to include the definition within dm-cache leads to duplicate definitions
+Not including the definitions lead to the symbols missing
+So neither compilation strategy worked
+Installed 3.14 kernel
+Tried to download 3.14 kernel using linux-$(uname -r), but was constantly given 3.13
+Don't know what was going on, but nothing was working here
+
+Movement to 3.14 kernel
+At first I attempted a apt-get upgrade to see if I can update the kernel slowly, but was moved all the way to 4.4 as Trusty was LTS
+Movement to Ubuntu Utopic 3.14
+As Ubuntu Utopic is not an LTS, when doing apt-get update/install 404 errors and ign signs are plenty
+We need to update the sources.list file to use old-releases instead
+There was also something going on with systemd, so we installed a thing and that kinda got fixed
+Downloaded the kernel version directly instead of getting trusty to try to avoid issues
+Compiled and everything worked.
+
+Steps:
+Download Utopic 14.10
+Edit /etc/apt/sources.list
+- replace us.archive.ubuntu.com/ubuntu with old-releases.ubuntu.com/ubuntu
+- replace security.ubuntu.com/ubuntu with old-releases.ubuntu.com/ubuntu
+sudo apt-get install dpkg-dev gcc make perl git systemd-sysv
+apt-get source linux-image-$(uname -r)
+sudo su
+- insert Guest CD for VirtualBox
+- mount /dev/sr0 /mnt
+- bash /mnt/VBoxLinuxAdditions.run
+ssh-keygen -t rsa -C "examp13@fiu.edu"
+- I couldn't get clipboard copy working, so instead I had to cp ~/.ssh/id_rsa.pub to a shared folder vm_shared
+- Add ssh key to GitLab
+git clone git@sylab-srv.cs.fiu.edu:slyon001/cache_nucleus.git
+cd cache_nucleus
+- cp -r ../linux-$(uname -r) linux
+- cp linux_patches/* linux/drivers/md
+- make
+sudo vim /etc/default/grub
+- edit GRUB_CMDLINE_LINUX="" to GRUB_CMDLINE_LINUX="console=ttyS0,9600"
+sudo update-grub
+Add 2 disks
+- Identify the smaller one as SSD
+Add Serial COM
+- Activate COM1
+- Output type of Raw File
+-- I have it output to /tmp/com_(vm name)
+
+Sources for other help:
+http://old-releases.ubuntu.com/releases/utopic/
+https://wiki.ubuntu.com/Kernel/KernelDebuggingTricks
+https://blog.kylemanna.com/linux/ssd-caching-using-dmcache-tutorial/
+https://stackoverflow.com/questions/36198830/sudo-apt-get-update-error-on-ubuntu-14-10
+https://bugs.launchpad.net/ubuntu/+source/systemd-shim/+bug/1359439
+https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=756247#53
+
+For strategy that didn't work:
+http://linuxg.net/how-to-install-kernel-3-14-15-on-ubuntu-14-04-and-derivative-systems/
+https://sysads.co.uk/2014/07/04/install-linux-kernel-3-14-10-lts-ubuntu-14-04-lts/
+https://wiki.ubuntu.com/Kernel/BuildYourOwnKernel
+

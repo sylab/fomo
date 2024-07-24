@@ -18,7 +18,6 @@
  *           (used externally to base_policy)
  * pool_list - A list_head for entry_pool use
  * oblock - Origin device block address
- * size - Size of entry, measured in units
  * time - Track the last time accessed (used externally to base_policy)
  * dirty - Track whether the entry is dirty
  * allocated - Track whether the entry has been allocated or not
@@ -30,7 +29,6 @@ struct entry {
   struct list_head pool_list;
   oblock_t oblock;
 
-  unsigned size;
   unsigned time;
 
   bool dirty : 1;

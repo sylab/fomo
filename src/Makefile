@@ -1,49 +1,23 @@
-FOMO_CFLAGS=-I $(INCLUDE_DIR) -I $(FOMO_DIR) $(CFLAGS)
+export INCLUDE_DIR=$(SRC_DIR)/include
+export ALGS_DIR=$(SRC_DIR)/algs
+export FOMO_DIR=$(SRC_DIR)/fomo
+export MSTAR_DIR=$(SRC_DIR)/mstar
+export SIM_DIR=$(SRC_DIR)/sim
+export DMCACHE_POLICY_DIR=$(SRC_DIR)/dmcache_policy
+export POLICY_REGISTRY_DIR=$(SRC_DIR)/policy_registry
 
-#ALGS=$(filter-out Makefile, $(shell ls $(ALGS_DIR)))
-#BUILD_ALGS_O_PATTERN=$(BUILD_DIR)/__xyz___policy.o
-#BUILD_ALGS_O=\
-#	$(foreach a, $(ALGS), $(subst __xyz__,$(a),$(BUILD_ALGS_O_PATTERN)))
+SUBDIRS= algs fomo mstar policy_registry sim workingset_size
 
-FOMO_REQS_C= \
-	$(FOMO_DIR)/fomo_policy.c 
-FOMO_REQS_H= \
-	$(FOMO_DIR)/fomo_policy.h 
-BUILD_FOMO_O=$(BUILD_DIR)/fomo_policy.o 
+.PHONY: all prep subdirs $(SUBDIRS)
 
-EXTRA_CFLAGS=-I $(INCLUDE_DIR) \
-             -I $(SRC_DIR) \
-             -I $(LINUX_DIR)/drivers/md $(CFLAGS)
+all: prep subdirs
 
-obj-m += fomo.o
-fomo-objs := fomo_policy.o
+prep:
+	$(info check/create folders in $(SRC_DIR))
+	@mkdir -p $(POLICY_REGISTRY_DIR)
 
-.PHONY: fomo
 
-fomo: $(KBUILD_DIR)/fomo.o \
-	$(BUILD_DIR)/libfomo.a
+subdirs: $(SUBDIRS)
 
-# Do I make libmalgs.a rather than attaching to libalgs.a?
-algs: $(BUILD_DIR)/libmalgs.a
-
-$(BUILD_DIR)/libfomo.a: \
-	$(FOMO_REQS_C) \
-        $(FOMO_REQS_H) \
-	$(BUILD_FOMO_O)
-	$(info AR $(notdir $@))
-	@ar rcs $(BUILD_DIR)/libfomo.a $(BUILD_FOMO_O)
-
-$(BUILD_DIR)/fomo_policy.o: \
-	fomo_policy.c \
-	fomo_policy.h
-	$(info CC $(notdir $@))
-	@gcc -o $@ -c $(FOMO_CFLAGS) $(FOMO_DIR)/fomo_policy.c
-
-$(KBUILD_DIR)/fomo.o: \
-	$(FOMO_REQS_C) \
-        $(FOMO_REQS_H)
-	$(info CC $(notdir $@))
-	make -C /lib/modules/$(shell uname -r)/build M=$(FOMO_DIR) modules
-	mv $(FOMO_DIR)/fomo.o $(KBUILD_DIR)/fomo.o
-	mv $(FOMO_DIR)/.fomo.o.cmd $(KBUILD_DIR)/.fomo.o.cmd
-	make -C /lib/modules/$(shell uname -r)/build M=$(FOMO_DIR) clean
+$(SUBDIRS):
+	@$(MAKE) -C $@
