@@ -4,19 +4,16 @@ Conventional caches are datapath caches due to each accessed item requiring that
 FOMO is a non-datapath cache admission policy that operates in two states: *insert* and *filter*, allowing cache insertions in the former state, and only selectively enabling insertions in the latter. Using two simple and inexpensive metrics, the *cache hit rate* and the *reuse rate of missed items*, FOMO makes judicious decisions about cache admission dynamically.
 
 
+## Quick Start
+
+ 1. Run `make` from root directory of the project to compile `cache-sim`.
+ 2. Run `cache-sim` with `./cache-sim lru 10 basic -f example.trace`.
+
+
 ## NOTE
 
-This repository contains work for a program called `cache nucleus` that has since not received updates.
+This repository contains work for a project called `cache nucleus` that has since not received updates.
 It contains several different algorithms including __`FOMO`__ and whose simulator (`cache-sim`) was used to test algorithms against a series of traces.
-
-The list of supported algorithms are as follows:
- - FOMO (a wrapper around different algorithms)
- - m\* (a wrapper around different algorithms)
- - LRU
- - ARC
- - LARC
- - LIRS
- - mARC
 
 The `dm-cache-policy` part of this project may not work and there are currently has no intentions to support this beyond the scope presented.
 
@@ -38,6 +35,24 @@ The following command with download and extract the Linux source code for your c
 `apt-get source linux-image-$(uname -r)`
 
 The Makefiles assume that the extracted source code in under the directory *linux*, so it is recommended to rename the extracted directory to *linux* (e.g. `mv linux-3.13.0 linux`).
+
+---
+
+## Algorithms
+
+The algorithms within this project are either direct caching algorithms or wrappers that utilize the direct caching algorithms to manage the cache.
+
+The list of supported algorithms are as follows:
+ - FOMO (a wrapper around different algorithms)
+ - m\* (a wrapper around different algorithms)
+ - LRU
+ - ARC
+ - LARC
+ - LIRS
+ - mARC
+
+The algorithms are identified with lower-case names for `cache-sim` and `dmcache-policy`, with the direct caching algorithm names would be: lru`/`arc`/`larc`/`lirs`/`marc`.
+The wrapper algorithms require a prefix (`fomo\_`/`mstar\_`) which is then followed by the direct caching algorithm (e.g. `fomo\_arc` or `mstar\_lru`).
 
 ---
 
