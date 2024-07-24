@@ -51,8 +51,8 @@ The list of supported algorithms are as follows:
  - LIRS
  - mARC
 
-The algorithms are identified with lower-case names for `cache-sim` and `dmcache-policy`, with the direct caching algorithm names would be: lru`/`arc`/`larc`/`lirs`/`marc`.
-The wrapper algorithms require a prefix (`fomo\_`/`mstar\_`) which is then followed by the direct caching algorithm (e.g. `fomo\_arc` or `mstar\_lru`).
+The algorithms are identified with lower-case names for `cache-sim` and `dmcache-policy`, with the direct caching algorithm names would be: `lru`/`arc`/`larc`/`lirs`/`marc`.
+The wrapper algorithms require a prefix (`fomo_`/`mstar_`) which is then followed by the direct caching algorithm (e.g. `fomo_arc` or `mstar_lru`).
 
 ---
 
